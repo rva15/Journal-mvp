@@ -32,6 +32,10 @@ class User(UserMixin, db.Model):
         return 'https://www.gravatar.com/avatar/{}?d=identicon&s={}'.format(
             digest, size)
 
+    def followed_posts(self):
+        own = Note.query.filter_by(user_id=self.id)
+        return own.order_by(Note.timestamp.desc())
+
 class Note(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     body = db.Column(db.String(140))

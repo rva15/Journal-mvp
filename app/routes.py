@@ -8,8 +8,8 @@ from flask_login import current_user, login_user, logout_user
 from flask_login import login_required
 from flask import request
 from werkzeug.urls import url_parse
-from app.models import User
-from app.forms import EditProfileForm
+from app.models import User, Note
+from app.forms import EditProfileForm, PostForm
 
 @app.route('/edit_profile', methods=['GET', 'POST'])
 @login_required
@@ -33,11 +33,20 @@ def before_request():
         current_user.last_seen = datetime.utcnow()
         db.session.commit()
 
-@app.route('/')
-@app.route('/index')
+@app.route('/', methods=['GET', 'POST'])
+@app.route('/index', methods=['GET', 'POST'])
 @login_required
 def index():
-    return render_template('index.html', title='Home')
+    form = PostForm()
+    if form.validate_on_submit():
+        note = Note(body=form.post.data, author=current_user)
+        db.session.add(note)
+        db.session.commit()
+        flash('Your post is now live!')
+        return redirect(url_for('index'))
+    notes = current_user.followed_posts().all()
+    return render_template("index.html", title='Home Page', form=form,
+                           notes=notes)
 
 @app.route('/logout')
 def logout():
