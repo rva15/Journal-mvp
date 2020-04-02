@@ -33,20 +33,12 @@ def before_request():
         current_user.last_seen = datetime.utcnow()
         db.session.commit()
 
-@app.route('/', methods=['GET', 'POST'])
-@app.route('/index', methods=['GET', 'POST'])
+@app.route('/')
+@app.route('/index')
 @login_required
 def index():
-    form = PostForm()
-    if form.validate_on_submit():
-        note = Note(body=form.post.data, author=current_user)
-        db.session.add(note)
-        db.session.commit()
-        flash('Your post is now live!')
-        return redirect(url_for('index'))
     notes = current_user.followed_posts().all()
-    return render_template("index.html", title='Home Page', form=form,
-                           notes=notes)
+    return render_template("index.html", title='Home Page', notes=notes)
 
 @app.route('/user/<username>', methods=['GET', 'POST'])
 @login_required
