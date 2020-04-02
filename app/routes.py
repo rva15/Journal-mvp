@@ -48,6 +48,20 @@ def index():
     return render_template("index.html", title='Home Page', form=form,
                            notes=notes)
 
+@app.route('/user/<username>', methods=['GET', 'POST'])
+@login_required
+def user(username):
+    user = User.query.filter_by(username=username).first_or_404()
+    form = PostForm()
+    if form.validate_on_submit():
+        note = Note(body=form.post.data, author=current_user)
+        db.session.add(note)
+        db.session.commit()
+        flash('Your post is now live!')
+        return redirect(url_for('user', username=username))
+    notes = current_user.followed_posts().all()
+    return render_template('user.html', user=user, form=form, notes=notes)
+
 @app.route('/logout')
 def logout():
     logout_user()
@@ -83,13 +97,3 @@ def register():
         flash('Congratulations, you are now a registered user!')
         return redirect(url_for('login'))
     return render_template('register.html', title='Register', form=form)
-
-@app.route('/user/<username>')
-@login_required
-def user(username):
-    user = User.query.filter_by(username=username).first_or_404()
-    posts = [
-        {'author': user, 'body': 'Test post #1'},
-        {'author': user, 'body': 'Test post #2'}
-    ]
-    return render_template('user.html', user=user, posts=posts)
